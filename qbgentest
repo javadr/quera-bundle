@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import string
+import re
+from pathlib import Path
+
+
+class TestCase():
+	firstObj = True
+	def __init__(self, script):
+		if not TestCase.firstObj:
+			print()
+		TestCase.firstObj = False
+		self.counter = 1
+		self.output = []
+		self.script = f"{script}.py"
+		self.pnum = re.findall('\d+', script)[0] # problem number
+		self.path = Path(f"p{self.pnum}")
+		self.__mkdir_path(self.path/"in")
+		self.__mkdir_path(self.path/"out")
+		print(f"Generating test cases for {self.script} ... ")
+		
+	def __mkdir_path(self, path):
+		if not path.is_dir():
+			path.mkdir(parents=True, exist_ok=True)
+
+	def __print_redirect__(self, *args, **kwrds):
+		if 'end' not in kwrds: kwrds['end'] = '\n'
+		if 'sep' not in kwrds: kwrds['sep'] = ' '
+		self.output.append( kwrds['sep'].join([ str(i) for i in args ]) + kwrds['end'] )
+
+	def run(self, ins):
+		#quera does not accept more than 100 test cases!
+		if self.counter > 100: return
+		open(f"{self.path}/in/input{self.counter}.txt" ,'w').write( ins )
+		with open( f"{self.script}" ) as T:
+			exec( ''.join(T) ,
+				{ 'input': ins.split('\n')[::-1].pop, 'print': self.__print_redirect__ } 
+			)
+		open(self.path/f"out/output{self.counter}.txt",'w').write( ''.join(self.output) )
+		print (f'\r#{self.pnum}: input/output file {self.counter} finished!', end='')
+		self.counter += 1
+		self.output = []
+	
+	__call__ = run # calling the object instead of the `run` method
+
+
+####################     Generating Test Cases and their answers     ####################
+# name of the solution program should contains at list one digit
+# which will be used as a suffix for `p` folder including `in` and `out` folders
+
+# gen = TestCase("sol-1")
+# for i in range(100):
+# 	INPUT = 'an input in the domain of problem.'
+# 	gen(INPUT)

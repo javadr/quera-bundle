@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# San Jan 22, 2022
+# In compliance with the latest version of Selenium since find_element_by_id is deprecated now.
+# Sat 6 Nov 2021
+# output the problem title as well as the url
+# Sun 17 Oct 2021
+# bug fix with site update.
+# Fri 18 Dec 2020
+#
+# Setting Python as main language in quera.ir for my course problem.
+
+import sys
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.common import exceptions
+from rich import print
+from rich.progress import track
+from parser import parse_args
+from tkinter import *
+
+Clang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4', 
+'Python 3.8':'5', 'Pypy 3':'59', 'Mono C#':'36', 'Php7':'37', 
+'Node.js':'38', 'Perl':'39', 'Go':'40', 'Ruby':'41', 'Obj-C':'48', 
+'Swift':'49', 'Javascript':'52', 'Haskell':'53', 'Blockly':'63'}
+
+
+class Checkbox(Frame):
+    def __init__(self, parent=None, picks=[], side=LEFT, anchor=W):
+        Frame.__init__(self, parent)
+        self.vars = []
+        for pick in picks:
+            var = IntVar()
+            chk = Checkbutton(self, text=pick, variable=var)
+            chk.pack(side=TOP, anchor=anchor, expand=YES)
+            self.vars.append(var)
+    def state(self):
+        return map((lambda var: var.get()), self.vars)
+
+class Assignment():
+    def __init__(self, args):
+        self.args = args
+        if not self.args.assignment_num.isdigit(): sys.exit()
+        self.asg_url = f'https://quera.ir/course/assignments/{self.args.assignment_num}/problems'
+        self.langs = []
+
+    def connect(self):
+        self.driver = Firefox()
+        self.driver.get(self.asg_url)
+        elem = self.driver.find_element(By.NAME, 'login')
+        elem.send_keys(self.args.username)
+        elem = self.driver.find_element(By.NAME, 'password')
+        elem.send_keys(self.args.password)
+        self.driver.find_element(By.CSS_SELECTOR,
+                            'button.ui.fluid.large.primary.submit.button').click(
+                            )  #send_keys(Keys.RETURN)
+    def __getlang__(self):
+        window = Tk()
+        window.title('Choose the desired languages')
+        def destroy(): pass 
+        window.protocol("WM_DELETE_WINDOW", destroy)
+        lng = Checkbox(window, Clang2id.keys())
+        lng.pack(side=TOP,  fill=X)
+        lng.config(relief=GROOVE, bd=2)
+        def allstates(): 
+            if any(list(lng.state())):
+                self.langs = [ Clang2id[list(Clang2id.keys())[i]] for i,j in enumerate(lng.state()) if j==1 ]
+                window.quit()
+        Button(window, text='Set', command=allstates).pack(side=BOTTOM)
+        window.mainloop()
+
+    def setlang(self):
+        self.connect()
+        self.driver.get(self.asg_url)
+        elements = self.driver.find_elements(By.CLASS_NAME, 'problem_menu_item')
+        probUrls = [(item.get_attribute("href").replace('problems',
+                                                        'edit_problem'),
+                    item.text.translate(str.maketrans('', '', '۰۱۲۳۴۵۶۷۸۹\n')))
+                    for item in elements]
+        self.__getlang__()
+        for url, item in track(probUrls, 'downloading ...'):
+            self.driver.get(url)
+            elem = self.driver.find_element(By.ID, 'set-all-selected')
+            elem.click() # select all and then
+            elem.click() # deselect all
+            for lang in self.langs:
+                self.driver.find_element(By.ID, f"id_j_allow_{lang}").send_keys(Keys.SPACE)
+            # The following doesnot work yet. So, the code use `save_and_continute` and `cancel` buttons instead.
+            #ok = driver.find_element_by_css_selector("button.ui.green.button")
+            self.driver.find_element(By.NAME, 'save_and_continue_editing').click()
+            self.driver.find_element(By.CSS_SELECTOR, "a.ui.teal.button").click()
+            print(f"[{item}]({url.replace('edit_problem', 'problems')}")
+
+    def dc(self):
+        self.driver.close()            
+
+def main():
+    """
+    Main entry point for execution.
+    """
+    args = parse_args()
+    asg = Assignment(args)
+
+    try:
+        asg.setlang()
+    except exceptions.WebDriverException as exp:
+        print(exp.msg)
+        sys.exit(1)
+    finally:
+        asg.dc()
+
+    print(" DONE! ".center(80, '='))
+
+
+
+if __name__ == '__main__':
+    main()

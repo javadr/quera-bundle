@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+import sys
+from pathlib import Path
+
+files = list(Path('.').glob('*xlsx'))
+if files == []: 
+    print('There is no xlsx file to be processed.!')
+    sys.exit()
+
+import pandas as pd
+import numpy as np
+from ordered_set import OrderedSet
+from rich import print
+from matplotlib import pyplot as plt
+
+
+def getMarks(df: pd.DataFrame) -> pd.DataFrame:
+
+    sid = 'شناسه کاربری'
+    sname = 'نام و نام خانوادگی'
+    sgrade = 'نمره داوری با تاخیر'
+
+    major_header = list(OrderedSet([f for f, s in df.columns]))
+    minor_header = list(OrderedSet([s for f, s in df.columns]))
+    minor_header = [sid] + [sgrade] * (len(major_header) - 1)
+    headers = pd.MultiIndex.from_tuples(list(zip(major_header, minor_header)))
+    ndf = df[headers]
+    ndf.columns = [
+        col.replace('سوال ', '') for col in minor_header[:1] + major_header[1:]
+    ]
+    ndf = ndf.fillna(0)
+    ndf = ndf.drop(ndf.loc[ndf[ndf.columns[0]] == 0].index)
+    ndf[ndf.columns[0]] = ndf[ndf.columns[0]].astype('str')  #uint64')
+    for i in range(1, len(headers)):
+        ndf[ndf.columns[i]] = ndf[ndf.columns[i]].astype('uint8')
+    ndf = ndf.set_index(ndf.columns[0])
+    return ndf.groupby(level=0).sum()
+
+def plot_marks(df):
+    fig, ax = plt.subplots()
+    fig.set_figheight(4)
+    fig.set_figwidth(16)
+    x = list(range(len(df.index)))
+    y = df['sum']
+    ax.set_xticks(x, df.index, rotation=55, rotation_mode='anchor', ha='right')
+    for i, txt in enumerate(y):
+        ax.annotate(text=txt, xy=(i + .1, txt))
+    ax.plot(x, y, marker='o', color='r')
+    fig.savefig('scores.png', bbox_inches='tight')
+
+##################################
+### Accumulates all the scores ###
+##################################
+
+df = getMarks(pd.read_excel(files[0], header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
+for file in files[1:]:
+    ndf = getMarks(pd.read_excel(file, header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
+    df = pd.concat([df, ndf], axis=1)
+
+df['sum'] = df.sum(axis=1).astype('uint32')
+df.to_csv('total.csv')
+
+plot_marks(df)
+
+fig = plt.figure()
+df['sum'].hist()
+fig.savefig('hist.png', bbox_inches='tight')
+
+print(f"\tAverage Score is: {df['sum'].sum()//len(df)}")
+
+print(sorted(list(zip(df.index, df['sum']))))
+
