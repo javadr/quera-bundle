@@ -17,7 +17,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common import exceptions
 from rich import print
-from rich.progress import track
 from parser import parse_args
 from tkinter import *
 
@@ -28,12 +27,12 @@ Clang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4',
 
 
 class Checkbox(Frame):
-    def __init__(self, parent=None, picks=[], side=LEFT, anchor=W):
+    def __init__(self, parent=None, items=[], side=LEFT, anchor=W):
         Frame.__init__(self, parent)
         self.vars = []
-        for pick in picks:
+        for item in items:
             var = IntVar()
-            chk = Checkbutton(self, text=pick, variable=var)
+            chk = Checkbutton(self, text=item, variable=var)
             chk.pack(side=TOP, anchor=anchor, expand=YES)
             self.vars.append(var)
     def state(self):
@@ -45,6 +44,7 @@ class Assignment():
         if not self.args.assignment_num.isdigit(): sys.exit()
         self.asg_url = f'https://quera.ir/course/assignments/{self.args.assignment_num}/problems'
         self.langs = []
+        self._setClang = False
 
     def connect(self):
         self.driver = Firefox()
@@ -56,7 +56,9 @@ class Assignment():
         self.driver.find_element(By.CSS_SELECTOR,
                             'button.ui.fluid.large.primary.submit.button').click(
                             )  #send_keys(Keys.RETURN)
-    def __getlang__(self):
+    def _getClang(self):
+        if self._setClang: return 
+        self._setClang = True
         window = Tk()
         window.title('Choose the desired languages')
         def destroy(): pass 
@@ -68,6 +70,7 @@ class Assignment():
             if any(list(lng.state())):
                 self.langs = [ Clang2id[list(Clang2id.keys())[i]] for i,j in enumerate(lng.state()) if j==1 ]
                 window.quit()
+                window.destroy()
         Button(window, text='Set', command=allstates).pack(side=BOTTOM)
         window.mainloop()
 
@@ -79,19 +82,26 @@ class Assignment():
                                                         'edit_problem'),
                     item.text.translate(str.maketrans('', '', '۰۱۲۳۴۵۶۷۸۹\n')))
                     for item in elements]
-        self.__getlang__()
-        for url, item in track(probUrls, 'downloading ...'):
+        radio_check = lambda x: self.driver.find_element(By.CSS_SELECTOR,
+                           f"input[type='radio'][value='{x}']").is_selected()
+        for url, item in probUrls:
             self.driver.get(url)
             elem = self.driver.find_element(By.ID, 'set-all-selected')
             elem.click() # select all and then
             elem.click() # deselect all
-            for lang in self.langs:
-                self.driver.find_element(By.ID, f"id_j_allow_{lang}").send_keys(Keys.SPACE)
+            if radio_check('J'): # Judge
+                self._getClang()
+                for lang in self.langs:
+                    self.driver.find_element(By.ID, f"id_j_allow_{lang}").send_keys(Keys.SPACE)
+            elif radio_check('C'): # Compile
+                pass
+            elif radio_check('U'): # Upload
+                pass
             # The following doesnot work yet. So, the code use `save_and_continute` and `cancel` buttons instead.
             #ok = driver.find_element_by_css_selector("button.ui.green.button")
             self.driver.find_element(By.NAME, 'save_and_continue_editing').click()
             self.driver.find_element(By.CSS_SELECTOR, "a.ui.teal.button").click()
-            print(f"[{item}]({url.replace('edit_problem', 'problems')}")
+            print(f"\r[{item}]({url.replace('edit_problem', 'problems')}")
 
     def dc(self):
         self.driver.close()            
@@ -112,7 +122,6 @@ def main():
         asg.dc()
 
     print(" DONE! ".center(80, '='))
-
 
 
 if __name__ == '__main__':
