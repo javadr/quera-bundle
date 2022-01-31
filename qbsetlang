@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# Mon Jan 31, 2022
+# time-limit field should contain a number which is multiple of 50
 # San Jan 22, 2022
 # In compliance with the latest version of Selenium since find_element_by_id is deprecated now.
 # Sat 6 Nov 2021
@@ -9,7 +11,7 @@
 # bug fix with site update.
 # Fri 18 Dec 2020
 #
-# Setting Python as main language in quera.ir for my course problem.
+# Setting default languages for programming problems of quera.ir used as assignments.
 
 import sys
 from selenium.webdriver import Firefox
@@ -26,7 +28,7 @@ Clang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4',
 'Swift':'49', 'Javascript':'52', 'Haskell':'53', 'Blockly':'63'}
 
 
-class Checkbox(Frame):
+class _Checkbox(Frame):
     def __init__(self, parent=None, items=[], side=LEFT, anchor=W):
         Frame.__init__(self, parent)
         self.vars = []
@@ -63,7 +65,7 @@ class Assignment():
         window.title('Choose the desired languages')
         def destroy(): pass 
         window.protocol("WM_DELETE_WINDOW", destroy)
-        lng = Checkbox(window, Clang2id.keys())
+        lng = _Checkbox(window, Clang2id.keys())
         lng.pack(side=TOP,  fill=X)
         lng.config(relief=GROOVE, bd=2)
         def allstates(): 
@@ -99,9 +101,14 @@ class Assignment():
                 pass
             # The following doesnot work yet. So, the code use `save_and_continute` and `cancel` buttons instead.
             #ok = driver.find_element_by_css_selector("button.ui.green.button")
+            for elem in self.driver.find_elements(By.CSS_SELECTOR,"input[type='number'][class='time-limit']"): 
+                time_limit = int(elem.get_attribute('value'))
+                if time_limit%100 not in (50,0):
+                    elem.clear()
+                    elem.send_keys(str(int(round(time_limit//100,1)*100)))
             self.driver.find_element(By.NAME, 'save_and_continue_editing').click()
             self.driver.find_element(By.CSS_SELECTOR, "a.ui.teal.button").click()
-            print(f"\r[{item}]({url.replace('edit_problem', 'problems')}")
+            print(f"\r[{item}]({url.replace('edit_problem', 'problems')})")
 
     def dc(self):
         self.driver.close()            
