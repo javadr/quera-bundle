@@ -11,7 +11,7 @@ define makezip =
 endef
 
 all:
-	@"$(PYTHON)" generator.py
+	@"$(PYTHON)" qbgettest
 
 zip:
 	$(foreach folder,$(shell ls p? p?? -d 2>/dev/null),$(call makezip,$(folder));)
