@@ -33,7 +33,7 @@ The script needs the user and password to login into http://quera.ir in order to
 
 It will open the assignment with the `PySelenium` and gets the languages from the user for the first problem and then applies it to the other problems. 
 
-<img src="images/setlang.png" alt="language list"/>
+<p align="center"><img src="images/setlang.png" alt="language list"/></p>
 
 ### `qbgentest` Test Case Generator
 
