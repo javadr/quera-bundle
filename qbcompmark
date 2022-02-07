@@ -2,12 +2,6 @@
 
 import sys
 from pathlib import Path
-
-files = list(Path('.').glob('*xlsx'))
-if files == []: 
-    print('There is no xlsx file to be processed.!')
-    sys.exit()
-
 import pandas as pd
 import numpy as np
 from ordered_set import OrderedSet
@@ -52,6 +46,11 @@ def plot_marks(df):
 ##################################
 ### Accumulates all the scores ###
 ##################################
+
+files = list(Path('.').glob('*xlsx'))
+if files == []: 
+    print('There is no xlsx file to be processed.!')
+    sys.exit()
 
 df = getMarks(pd.read_excel(files[0], header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
 for file in files[1:]:

@@ -91,6 +91,14 @@ class Assignment():
             elem = self.driver.find_element(By.ID, 'set-all-selected')
             elem.click() # select all and then
             elem.click() # deselect all
+            # ii = self.driver.find_elements(By.CSS_SELECTOR,"input[type='checkbox'][class='hidden']")
+            # from rich import inspect
+            # inspect(ii, all=True)
+            # print(ii)
+            # for i in ii:
+            #     print(i.get_attribute("id"))
+            # exit()
+
             if radio_check('J'): # Judge
                 self._getClang()
                 for lang in self.langs:
