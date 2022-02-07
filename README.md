@@ -37,7 +37,12 @@ It will open the assignment with the `PySelenium` and gets the languages from th
 
 ### `qbgentest` Test Case Generator
 
-The `qbgentest` makes the `in` and `out` folders containing the test cases and their solutions in an acceptable format for [Quera](http://quera.ir). It gets the name of the solution program as the input of `TestCase` class constructor and it assumes that the name contains a number that will be used in the name of input and output folders, respectively `in{num}` and `out{num}`. Then the created object would be called with the input including the `\n` to separate each line of the input. 
+The `qbgentest` makes the `in` and `out` folders containing the test cases and their solutions in an acceptable format for [Quera](http://quera.ir). It gets the name of the solution program as the input of `TestCase` class constructor and it assumes that the name contains a number that will be used in the name of input and output folders, respectively `in{num}` and `out{num}`. Then the created object would be called with the input including the `\n` to separate each line of the input.
+
+If you run the `Makefile` in `shell`, it will run the `qbgentest`. 
+Running the following command packs all test case folders in `zip` files for uploading to Quera.
+
+```$ make zip```
 
 ### `qbcompmark` Computes Total Grades and Plots Them
 
