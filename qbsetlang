@@ -27,19 +27,31 @@ Clang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4',
 'Node.js':'38', 'Perl':'39', 'Go':'40', 'Ruby':'41', 'Obj-C':'48', 
 'Swift':'49', 'Javascript':'52', 'Haskell':'53', 'Blockly':'63'}
 
+class LangWindow(Frame):
+    def __init__(self, items, title):
+        self.items = items
+        self.window = Tk()
+        self.window.title(title)
+        def destroy(): pass 
+        self.window.protocol("WM_DELETE_WINDOW", destroy)
 
-class _Checkbox(Frame):
-    def __init__(self, parent=None, items=[], anchor=W):
-        Frame.__init__(self, parent)
-        self.vars = []
-        row, width = -1, max([len(_) for _ in items])
-        for i, item in enumerate(items):
-            var = IntVar()
+    def get(self):
+        def _state(): return map((lambda var: var.get()), vars)
+        def allstates(): 
+            if any(list(_state())):
+                self.window.quit()
+                self.window.destroy()
+        vars = []
+        row, width = -1, max([len(_) for _ in self.items])
+        for i, item in enumerate(self.items):
             if i%3==0: row += 1 
-            chk = Checkbutton(self, text=item, variable=var, relief=RIDGE, width=width, anchor=anchor).grid(row=row,column=i%3)
-            self.vars.append(var)
-    def state(self):
-        return map((lambda var: var.get()), self.vars)
+            var = IntVar()
+            chk = Checkbutton(self.window, text=item, variable=var, relief=RIDGE, 
+                                width=width, anchor=W).grid(row=row,column=i%3)
+            vars.append(var)
+        Button(self.window, text='Set', command=allstates).grid(column=1)
+        self.window.mainloop()
+        return list(_state())
 
 class Assignment():
     def __init__(self, args):
@@ -62,20 +74,8 @@ class Assignment():
     def _getClang(self):
         if self._setClang: return 
         self._setClang = True
-        window = Tk()
-        window.title('Choose the desired languages')
-        def destroy(): pass 
-        window.protocol("WM_DELETE_WINDOW", destroy)
-        lng = _Checkbox(window, Clang2id.keys())
-        lng.pack(side=TOP,  fill=X)
-        lng.config(relief=GROOVE, bd=2)
-        def allstates(): 
-            if any(list(lng.state())):
-                self.langs = [ Clang2id[list(Clang2id.keys())[i]] for i,j in enumerate(lng.state()) if j==1 ]
-                window.quit()
-                window.destroy()
-        Button(window, text='Set', command=allstates).pack(side=BOTTOM)
-        window.mainloop()
+        check = LangWindow(items=Clang2id.keys(), title='Choose the desired languages')
+        self.langs = [ Clang2id[list(Clang2id.keys())[i]] for i,j in enumerate(check.get()) if j==1 ]
 
     def setlang(self):
         self.connect()
@@ -138,7 +138,6 @@ def main():
         asg.dc()
 
     print(" DONE! ".center(80, '='))
-
 
 if __name__ == '__main__':
     main()
