@@ -37,6 +37,13 @@ def parse_args(args=None):
         action='store',
         help='password required to login in quera')
 
+    group_basic.add_argument(
+        '--config',
+        dest='config',
+        action='store_true',
+        default=False,
+        help='Ask the user for the desired languages')
+
     # Final parsing of the options
     args = parser.parse_args(args)
 

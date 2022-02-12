@@ -21,7 +21,7 @@ To make Firefox work with Python selenium, you need to install the `geckodriver`
 
 ## Running the Scritps
 
-### `qbsetlang` Set Default Programming Languages for an Assingment
+### [`qbsetlang`] Set Default Programming Languages for an Assingment
 
 When we set an assingment, we should set the acceptable languages for each problem manually. When you copy a set of problems from [Quera Question's Bank], it is really annoying to set the wanted languages one bye one. The `qbsetlang` makes this process automatically.
 
@@ -35,7 +35,9 @@ It will open the assignment with the `PySelenium` and gets the languages from th
 
 <p align="center"><img src="images/setlang.png" alt="language list"/></p>
 
-### `qbgentest` Test Case Generator
+The program saves the chosen languages into `config.yaml` file and then reuses it afterward without any question. To reconfigure the desired languages, the `--config` option should be used. 
+
+### [`qbgentest`] Test Case Generator
 
 The `qbgentest` makes the `in` and `out` folders containing the test cases and their solutions in an acceptable format for [Quera](http://quera.ir). It gets the name of the solution program as the input of `TestCase` class constructor and it assumes that the name contains a number that will be used in the name of input and output folders, respectively `in{num}` and `out{num}`. Then the created object would be called with the input including the `\n` to separate each line of the input.
 
@@ -44,6 +46,6 @@ Running the following command packs all test case folders in `zip` files for upl
 
 ```$ make zip```
 
-### `qbcompmark` Computes Total Grades and Plots Them
+### [`qbcompmark`] Computes Total Grades and Plots Them
 
 At first, download the assignments' grade via quera in `XLSX` format. Then, just run the `qbcompmark` in the folder containing those files. It will create a CSV file that includes all marks from all assignments and their sum. It also plots the summation for each student in a single graph depicting their attempts during the semester. 

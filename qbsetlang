@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+# Sat Feb 12, 2022
+# Save the chosen languages in `config.yaml`
 # Mon Jan 31, 2022
 # time-limit field should contain a number which is multiple of 50
 # San Jan 22, 2022
@@ -20,38 +21,55 @@ from selenium.webdriver.common.by import By
 from selenium.common import exceptions
 from rich import print
 from parser import parse_args
+from pathlib import Path
 from tkinter import *
+import yaml
 
-Clang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4', 
+Jlang2id = {'C':'1', 'C++':'2', 'Java':'3', 'Python 2':'4', 
 'Python 3.8':'5', 'Pypy 3':'59', 'Mono C#':'36', 'Php7':'37', 
 'Node.js':'38', 'Perl':'39', 'Go':'40', 'Ruby':'41', 'Obj-C':'48', 
 'Swift':'49', 'Javascript':'52', 'Haskell':'53', 'Blockly':'63'}
 
 class LangWindow(Frame):
-    def __init__(self, items, title):
-        self.items = items
+    def __init__(self, items, title, config):
+        self.items = list(items)
+        self.config = config
         self.window = Tk()
         self.window.title(title)
         def destroy(): pass 
         self.window.protocol("WM_DELETE_WINDOW", destroy)
 
     def get(self):
+        if not self.config and Path('config.yaml').is_file():
+            with open("config.yaml", "r") as stream:
+                try:
+                    data = yaml.safe_load(stream)
+                    return data['Judge']
+                except yaml.YAMLError as exc:
+                    print(exc)
         def _state(): return map((lambda var: var.get()), vars)
         def allstates(): 
             if any(list(_state())):
+                if self.config or not Path('config.yaml').is_file():
+                    with open("config.yaml", "w") as stream:
+                        try:
+                            data = {'Judge': [ self.items[i] for i,j in enumerate(list(_state())) if j ]}
+                            yaml.dump(data, stream)
+                        except yaml.YAMLError as exc:
+                            print(exc)
                 self.window.quit()
                 self.window.destroy()
         vars = []
         row, width = -1, max([len(_) for _ in self.items])
         for i, item in enumerate(self.items):
             if i%3==0: row += 1 
-            var = IntVar()
+            var = BooleanVar()
             chk = Checkbutton(self.window, text=item, variable=var, relief=RIDGE, 
                                 width=width, anchor=W).grid(row=row,column=i%3)
             vars.append(var)
         Button(self.window, text='Set', command=allstates).grid(column=1)
         self.window.mainloop()
-        return list(_state())
+        return [ self.items[i] for i,j in enumerate(list(_state())) if j ]
 
 class Assignment():
     def __init__(self, args):
@@ -74,8 +92,7 @@ class Assignment():
     def _getClang(self):
         if self._setClang: return 
         self._setClang = True
-        check = LangWindow(items=Clang2id.keys(), title='Choose the desired languages')
-        self.langs = [ Clang2id[list(Clang2id.keys())[i]] for i,j in enumerate(check.get()) if j==1 ]
+        self.langs = LangWindow(Jlang2id.keys(), 'Choose the desired languages', self.args.config).get()
 
     def setlang(self):
         self.connect()
@@ -92,18 +109,10 @@ class Assignment():
             elem = self.driver.find_element(By.ID, 'set-all-selected')
             elem.click() # select all and then
             elem.click() # deselect all
-            # ii = self.driver.find_elements(By.CSS_SELECTOR,"input[type='checkbox'][class='hidden']")
-            # from rich import inspect
-            # inspect(ii, all=True)
-            # print(ii)
-            # for i in ii:
-            #     print(i.get_attribute("id"))
-            # exit()
-
             if radio_check('J'): # Judge
                 self._getClang()
                 for lang in self.langs:
-                    self.driver.find_element(By.ID, f"id_j_allow_{lang}").send_keys(Keys.SPACE)
+                    self.driver.find_element(By.ID, f"id_j_allow_{Jlang2id[lang]}").send_keys(Keys.SPACE)
             elif radio_check('C'): # Compile
                 pass
             elif radio_check('U'): # Upload

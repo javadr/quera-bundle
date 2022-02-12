@@ -1,3 +1,5 @@
 pass
 __pycache__
 geckodriver.log
+config.yaml
+test.py
