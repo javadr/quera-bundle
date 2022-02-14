@@ -49,3 +49,7 @@ Running the following command packs all test case folders in `zip` files for upl
 ### [`qbcompmark`] Computes Total Grades and Plots Them
 
 At first, download the assignments' grade via quera in `XLSX` format. Then, just run the `qbcompmark` in the folder containing those files. It will create a CSV file that includes all marks from all assignments and their sum. It also plots the summation for each student in a single graph depicting their attempts during the semester. 
+
+### Installation Note for RPM Based Linux Distribution
+tkinter in centos need to install with yum:
+```yum install python3-tkinter```
