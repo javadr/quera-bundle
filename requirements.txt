@@ -1,4 +1,5 @@
 rich
+pyyaml
 pathlib
 selenium
 configargparse
