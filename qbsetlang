@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Sun Feb 13, 2022
+# Config Class
 # Sat Feb 12, 2022
 # Save the chosen languages in `config.yaml`
 # get the languages list automatically + check for languages' list update
@@ -27,6 +29,34 @@ from pathlib import Path
 from tkinter import *
 import yaml
 
+class Config(object):
+    config_file = 'config.yaml'
+    @staticmethod
+    def exist():
+        return Path(Config.config_file).is_file()
+
+    @staticmethod
+    def set(key, value):
+        data = Config.get() if Config.exist() else {key: value}
+        with open(Config.config_file, "w") as stream:
+            try:
+                data[key] = value
+                yaml.dump(data, stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+
+    @staticmethod
+    def get(key=None):
+        with open(Config.config_file, "r") as stream:
+            try:
+                data = yaml.safe_load(stream)
+                return data[key] if key else data
+            except yaml.YAMLError as exc:
+                print(exc)
+    
+    def __class_getitem__(cls, key=None): #from python 3.7
+        return Config.get(key)
+
 class LangWindow(Frame):
     def __init__(self, items, config):
         self.items = list(items)
@@ -37,23 +67,13 @@ class LangWindow(Frame):
         self.window.protocol("WM_DELETE_WINDOW", destroy)
 
     def get(self):
-        if not self.config and Path('config.yaml').is_file():
-            with open("config.yaml", "r") as stream:
-                try:
-                    data = yaml.safe_load(stream)
-                    return data['Judge']
-                except yaml.YAMLError as exc:
-                    print(exc)
+        if not self.config and Config.exist():
+            return Config['Judge']
         def _state(): return map((lambda var: var.get()), vars)
         def allstates(): 
             if any(list(_state())):
-                if self.config or not Path('config.yaml').is_file():
-                    with open("config.yaml", "w") as stream:
-                        try:
-                            data = {'Judge': [ self.items[i] for i,j in enumerate(list(_state())) if j ]}
-                            yaml.dump(data, stream)
-                        except yaml.YAMLError as exc:
-                            print(exc)
+                if self.config or not Config.exist():
+                    Config.set('Judge', [ self.items[i] for i,j in enumerate(list(_state())) if j ])
                 self.window.quit()
                 self.window.destroy()
         vars = []
