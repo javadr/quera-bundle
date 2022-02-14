@@ -25,12 +25,17 @@ from selenium.common import exceptions
 from rich import print
 from rich.padding import Padding
 from parser import parse_args
+import parser
 from pathlib import Path
 from tkinter import *
 import yaml
 
 class Config(object):
     config_file = 'config.yaml'
+
+    def __new__(self, key, value):
+        return Config.set(key, value)
+
     @staticmethod
     def exist():
         return Path(Config.config_file).is_file()
@@ -56,6 +61,7 @@ class Config(object):
     
     def __class_getitem__(cls, key=None): #from python 3.7
         return Config.get(key)
+
 
 class LangWindow(Frame):
     def __init__(self, items, config):
@@ -98,15 +104,31 @@ class Assignment():
         self._setClang = False
 
     def connect(self):
+        no_userpass = False
+        if self.args.username:
+            Config('username', self.args.username)
+            username = self.args.username
+        elif Config.exist():
+            try:
+                username = Config['username']
+            except KeyError:
+                no_userpass = True
+        if self.args.password:
+            Config('password', self.args.password)
+            password = self.args.password
+        elif Config.exist():
+            try:
+                password = Config['password']
+            except KeyError:
+                no_userpass = True
+        if no_userpass:
+            fatal_error('No user/pass error!')
         self.driver = Firefox()
         self.driver.get(self.asg_url)
-        elem = self.driver.find_element(By.NAME, 'login')
-        elem.send_keys(self.args.username)
-        elem = self.driver.find_element(By.NAME, 'password')
-        elem.send_keys(self.args.password)
+        self.driver.find_element(By.NAME, 'login').send_keys(username)
+        self.driver.find_element(By.NAME, 'password').send_keys(password)
         self.driver.find_element(By.CSS_SELECTOR,
-                            'button.ui.fluid.large.primary.submit.button').click(
-                            )  #send_keys(Keys.RETURN)
+                            'button.ui.fluid.large.primary.submit.button').click()  #send_keys(Keys.RETURN)
     def _getClang(self):
         if self._setClang: return 
         self._setClang = True
@@ -139,9 +161,10 @@ class Assignment():
                     try: # sometimes there will be an update in the list, e.g. Python 3.7 to Pyhton 3.8
                         self.driver.find_element(By.ID, f"{self.Jlang2id[lang]}").send_keys(Keys.SPACE)
                     except:
+                        bs, be = "[black][bold]", "[/bold][/black]"
                         print(Padding(f"{' Failure '.center(60,'#')}\n"+\
-                        f"## The [black]{lang}[/black] is not in the quera list anymore,\n"+\
-                        f"## run the script with '[black]--config[/black]' switch.\n"+\
+                        f"## The {bs}{lang}{be} is not in the quera list anymore,\n"+\
+                        f"## run the script with '{bs}--config{be}' switch.\n"+\
                         f"{'#'*60}", (1,2), style='on red', expand=False))
             elif radio_check('C'): # Compile
                 pass
@@ -159,24 +182,31 @@ class Assignment():
             print(f"\r[{item}]({url.replace('edit_problem', 'problems')})")
 
     def dc(self):
-        self.driver.close()            
+        if hasattr(self, 'driver'):
+            self.driver.close()            
+
+
+def fatal_error(message):
+    print(f">>> [blink][red][bold]{message}[bold][/red][/blink] <<<")
+    args.parser.print_usage()
+    sys.exit(1)
 
 def main():
     """
     Main entry point for execution.
     """
+    global args
     args = parse_args()
     asg = Assignment(args)
 
     try:
         asg.setlang()
+        print(" DONE! ".center(80, '='))
     except exceptions.WebDriverException as exp:
         print(exp.msg)
         sys.exit(1)
     finally:
         asg.dc()
-
-    print(" DONE! ".center(80, '='))
-
+    
 if __name__ == '__main__':
     main()

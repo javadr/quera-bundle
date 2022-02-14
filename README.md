@@ -35,7 +35,7 @@ It will open the assignment with the `PySelenium` and gets the languages from th
 
 <p align="center"><img src="images/setlang.png" alt="language list"/></p>
 
-The program saves the chosen languages into `config.yaml` file and then reuses it afterward without any question. To reconfigure the desired languages, the `--config` option should be used. 
+The program saves the chosen languages into `config.yaml` file and then reuses it afterward without any question. To reconfigure the desired languages, the `--config` option should be used. It also saves the `username` and `password` into the config file, thus `user` and `pass` is mandatory for the first run. 
 
 ### [`qbgentest`] Test Case Generator
 

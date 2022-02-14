@@ -51,4 +51,5 @@ def parse_args(args=None):
         parser.print_usage()
         sys.exit(1)
 
+    args.parser = parser
     return args
