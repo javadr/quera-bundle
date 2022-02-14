@@ -29,6 +29,7 @@ import parser
 from pathlib import Path
 from tkinter import *
 import yaml
+import cryptocode
 
 class Config(object):
     config_file = 'config.yaml'
@@ -94,6 +95,15 @@ class LangWindow(Frame):
         self.window.mainloop()
         return [ self.items[i] for i,j in enumerate(list(_state())) if j ]
 
+class Password:
+    @staticmethod
+    def encrypt(password):
+        return cryptocode.encrypt(password,args.key)
+
+    @staticmethod
+    def decrypt(encoded):
+        return cryptocode.decrypt(encoded, args.key)
+
 class Assignment():
     def __init__(self, args):
         self.args = args
@@ -114,11 +124,12 @@ class Assignment():
             except KeyError:
                 no_userpass = True
         if self.args.password:
-            Config('password', self.args.password)
+            password = Password.encrypt(self.args.password)
+            Config('password', password)
             password = self.args.password
         elif Config.exist():
             try:
-                password = Config['password']
+                password = Password.decrypt(Config['password'])
             except KeyError:
                 no_userpass = True
         if no_userpass:

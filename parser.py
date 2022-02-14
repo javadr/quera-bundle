@@ -4,6 +4,7 @@
 import configargparse as argparse
 import sys
 import tempfile
+import uuid
 
 def parse_args(args=None):
     """
@@ -43,6 +44,13 @@ def parse_args(args=None):
         action='store_true',
         default=False,
         help='Ask the user for the desired languages')
+
+    group_basic.add_argument(
+        '--key',
+        dest='key',
+        action='store',
+        default=str(uuid.getnode()),
+        help='key used to make the saved password unreadable')
 
     # Final parsing of the options
     args = parser.parse_args(args)
