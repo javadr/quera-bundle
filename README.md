@@ -18,6 +18,9 @@ To use this method, you would proceed as:
 
 To make Firefox work with Python selenium, you need to install the `geckodriver`. The `geckodriver` driver will start the real firefox browser and supports Javascript.
 
+### Installation Note for RPM Based Linux Distribution
+`CentOS` users should install `tkinter`:
+```yum install python3-tkinter```
 
 ## Running the Scritps
 
