@@ -64,7 +64,7 @@ class Config(object):
     def __class_getitem__(cls, key=None): #from python 3.7
         return Config.get(key)
 
-class LangWindow(Frame):
+class LangWindow:
     def __init__(self, items, config, nogui=False):
         self.items = list(items)
         self.config = config
