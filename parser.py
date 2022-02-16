@@ -52,6 +52,13 @@ def parse_args(args=None):
         default=str(uuid.getnode()),
         help='key used to make the saved password unreadable')
 
+    group_basic.add_argument(
+        '--nogui',
+        dest='nogui',
+        action='store_true',
+        default=False,
+        help='Get the list of languages via terminal')
+
     # Final parsing of the options
     args = parser.parse_args(args)
 
