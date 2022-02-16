@@ -84,7 +84,10 @@ class LangWindow:
 
     def _gui_get(self):
         if not self.config and Config.exist():
-            return Config['Judge']
+            try:
+                return Config['Judge']
+            except KeyError:    
+                pass
         def _state(): return map((lambda var: var.get()), vars)
         def allstates(): 
             if any(list(_state())):
@@ -106,7 +109,10 @@ class LangWindow:
 
     def _nogui_get(self):
         if not self.config and Config.exist():
-            return Config['Judge']
+            try:
+                return Config['Judge']
+            except KeyError:
+                pass
         clear_screen()
         include_list = set()  # saves the list of languages to be included
         getRange = lambda x: set(range(int(x), int(x) + 1) if len(x.split('-')) == 1 
