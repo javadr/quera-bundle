@@ -1,6 +1,8 @@
+uuid
 rich
 pyyaml
 pathlib
 pathlib2
 selenium
+cryptocode
 configargparse
