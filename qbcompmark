@@ -35,23 +35,24 @@ colors = ['#f7fbff', '#deebf7', '#c6dbef',
         '#9ecae1', '#6baed6', '#4292c6',
         '#2171b5','#08519c','#08306b'][::-1]
 
-def plot_marks(X, Ys, ind):
+def plot_marks(Ys, title=''):
     fig, ax = plt.subplots()
     fig.set_figheight(4)
     fig.set_figwidth(16)
     for i,y in enumerate(Ys[:-1]):
-        ax.plot(X, y, color=colors[i%9])
-    ax.plot(X, y, marker='o', color='r')
+        ax.plot(y.index, y, color=colors[i%9])
+    ax.plot(Ys[-1].index, Ys[-1], marker='o', color='r')
     for i, txt in enumerate(Ys[-1]):
         ax.annotate(text=txt, xy=(i + .1, txt))
-    ax.set_xticks(X, ind, rotation=55, rotation_mode='anchor', ha='right')
+    ax.set_xticks(Ys[-1].index, Ys[-1].index, rotation=55, rotation_mode='anchor', ha='right')
+    ax.set_title(title)
     fig.savefig('scores.png', bbox_inches='tight')
 
 ##################################
 ### Accumulates all the scores ###
 ##################################
 
-files = list(Path('.').glob('*xlsx'))
+files = list(sorted(Path('.').glob('*xlsx')))
 if files == []: 
     print('There is no xlsx file to be processed.!')
     sys.exit()
@@ -60,23 +61,21 @@ Ys = []
 df = getMarks(pd.read_excel(files[0], header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
 for file in files[1:]:
     ndf = getMarks(pd.read_excel(file, header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
+    Ys.append( df.sum(axis=1).astype('uint32') )
     df = pd.concat([df, ndf], axis=1)
-    y = df.sum(axis=1).astype('uint32')
-    Ys.append(y)
 
 df['sum'] = df.sum(axis=1).astype('uint32')
-X, y = list(range(len(df.index))), df['sum']
-Ys.append(y)
+Ys.append(df['sum'])
 
 df.to_csv('total.csv')
 
-plot_marks(X, Ys, df.index)
+plot_marks(Ys, title=f"Cumulative Plot for {len(files)} Assignment(s) with {len(df.columns)-1} Question(s) in Total.")
 
 fig = plt.figure()
 df['sum'].hist()
 fig.savefig('hist.png', bbox_inches='tight')
 
-print(f"\tAverage Score is: {df['sum'].sum()//len(df)}")
+print(f"\tAverage Score is: {df['sum'].sum()//len(df)} [{len(files)} Assignment(s) with {len(df.columns)-1} Question(s)]")
 
 print(sorted(list(zip(df.index, df['sum']))))
 
