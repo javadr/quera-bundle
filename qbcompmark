@@ -9,73 +9,87 @@ from rich import print
 from matplotlib import pyplot as plt
 
 
-def getMarks(df: pd.DataFrame) -> pd.DataFrame:
+class Grade:
 
-    sid = 'شناسه کاربری'
-    sname = 'نام و نام خانوادگی'
-    sgrade = 'نمره داوری با تاخیر'
+    colors = ['#f7fbff', '#deebf7', '#c6dbef',
+            '#9ecae1', '#6baed6', '#4292c6',
+            '#2171b5','#08519c','#08306b'][::-1]
 
-    major_header = list(OrderedSet([f for f, s in df.columns]))
-    minor_header = list(OrderedSet([s for f, s in df.columns]))
-    minor_header = [sid] + [sgrade] * (len(major_header) - 1)
-    headers = pd.MultiIndex.from_tuples(list(zip(major_header, minor_header)))
-    ndf = df[headers]
-    ndf.columns = [
-        col.replace('سوال ', '') for col in minor_header[:1] + major_header[1:]
-    ]
-    ndf = ndf.fillna(0)
-    ndf = ndf.drop(ndf.loc[ndf[ndf.columns[0]] == 0].index)
-    ndf[ndf.columns[0]] = ndf[ndf.columns[0]].astype('str')  #uint64')
-    for i in range(1, len(headers)):
-        ndf[ndf.columns[i]] = ndf[ndf.columns[i]].astype('uint8')
-    ndf = ndf.set_index(ndf.columns[0])
-    return ndf.groupby(level=0).sum()
+    def __init__(self,):
+        self.files = list(sorted(Path('.').glob('*xlsx')))
+        assert self.files != [], 'There is no xlsx file to be processed.!'
+        self.Ys = [] # grade of each assignment
+        self.df = None # dataframe of all assignment and their grades in detail
 
-colors = ['#f7fbff', '#deebf7', '#c6dbef',
-        '#9ecae1', '#6baed6', '#4292c6',
-        '#2171b5','#08519c','#08306b'][::-1]
+    def get_marks(self, file: Path) -> pd.DataFrame:
+        df = pd.read_excel(file, header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,})
+        sid = 'شناسه کاربری'
+        sname = 'نام و نام خانوادگی'
+        sgrade = 'نمره داوری با تاخیر'
 
-def plot_marks(Ys, title=''):
-    fig, ax = plt.subplots()
-    fig.set_figheight(4)
-    fig.set_figwidth(16)
-    for i,y in enumerate(Ys[:-1]):
-        ax.plot(y.index, y, color=colors[i%9])
-    ax.plot(Ys[-1].index, Ys[-1], marker='o', color='r')
-    for i, txt in enumerate(Ys[-1]):
-        ax.annotate(text=txt, xy=(i + .1, txt))
-    ax.set_xticks(Ys[-1].index, Ys[-1].index, rotation=55, rotation_mode='anchor', ha='right')
-    ax.set_title(title)
-    fig.savefig('scores.png', bbox_inches='tight')
+        major_header = list(OrderedSet([f for f, s in df.columns]))
+        minor_header = list(OrderedSet([s for f, s in df.columns]))
+        minor_header = [sid] + [sgrade] * (len(major_header) - 1)
+        headers = pd.MultiIndex.from_tuples(list(zip(major_header, minor_header)))
+        ndf = df[headers]
+        ndf.columns = [
+            col.replace('سوال ', '') for col in minor_header[:1] + major_header[1:]
+        ]
+        ndf = ndf.fillna(0)
+        ndf = ndf.drop(ndf.loc[ndf[ndf.columns[0]] == 0].index)
+        ndf[ndf.columns[0]] = ndf[ndf.columns[0]].astype('str')  #uint64')
+        for i in range(1, len(headers)):
+            ndf[ndf.columns[i]] = ndf[ndf.columns[i]].astype('uint8')
+        ndf = ndf.set_index(ndf.columns[0])
+        return ndf.groupby(level=0).sum()
 
-##################################
-### Accumulates all the scores ###
-##################################
+    def plot_marks(self, title=''):
+        """
+        `Ys` is a list of pandas Series including the grade of each question.
+        """
+        fig, ax = plt.subplots()
+        fig.set_figheight(4)
+        fig.set_figwidth(16)
+        for i,y in enumerate(self.Ys[:-1]):
+            ax.plot(y.index, y, color=Grade.colors[i%9])
+        ax.plot(self.Ys[-1].index, self.Ys[-1], marker='o', color='r')
+        for i, txt in enumerate(self.Ys[-1]):
+            ax.annotate(text=txt, xy=(i + .1, txt))
+        ax.set_xticks(self.Ys[-1].index, self.Ys[-1].index, rotation=55, rotation_mode='anchor', ha='right')
+        ax.set_title(title)
+        fig.savefig('scores.png', bbox_inches='tight')
 
-files = list(sorted(Path('.').glob('*xlsx')))
-if files == []: 
-    print('There is no xlsx file to be processed.!')
-    sys.exit()
+    def accumulate(self):
+        """
+            Accumulates all marks
+        """
+        df = self.get_marks(self.files[0])
+        for file in self.files[1:]:
+            ndf = self.get_marks(file)
+            self.Ys.append( df.sum(axis=1).astype('uint32') )
+            df = pd.concat([df, ndf], axis=1)
+        df['sum'] = df.sum(axis=1).astype('uint32')
+        self.Ys.append(df['sum'])
+        self.df = df 
 
-Ys = []
-df = getMarks(pd.read_excel(files[0], header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
-for file in files[1:]:
-    ndf = getMarks(pd.read_excel(file, header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,}))
-    Ys.append( df.sum(axis=1).astype('uint32') )
-    df = pd.concat([df, ndf], axis=1)
+    def csv_plot(self):
+        # csv and marks plot
+        self.df.to_csv('total.csv')
+        self.plot_marks(title=f"Cumulative Plot for {len(self.files)} Assignment(s) with {len(self.df.columns)-1} Question(s) in Total.")
+        # histogram of marks
+        fig = plt.figure()
+        self.df['sum'].hist()
+        fig.savefig('hist.png', bbox_inches='tight')
+        # outputing the average with list of all students with their total marks
+        print('='*60)
+        print(f"Average Score is: {self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment(s) with {len(self.df.columns)-1} Question(s)]")
+        print('='*60)
+        print( '\n'.join([f"{i}, {j}" for i,j in sorted(list(zip(self.df.index, self.df['sum'])))]) )
 
-df['sum'] = df.sum(axis=1).astype('uint32')
-Ys.append(df['sum'])
+    def compute(self):
+        self.accumulate()
+        self.csv_plot()
 
-df.to_csv('total.csv')
 
-plot_marks(Ys, title=f"Cumulative Plot for {len(files)} Assignment(s) with {len(df.columns)-1} Question(s) in Total.")
-
-fig = plt.figure()
-df['sum'].hist()
-fig.savefig('hist.png', bbox_inches='tight')
-
-print(f"\tAverage Score is: {df['sum'].sum()//len(df)} [{len(files)} Assignment(s) with {len(df.columns)-1} Question(s)]")
-
-print(sorted(list(zip(df.index, df['sum']))))
-
+g = Grade()
+g.compute()
