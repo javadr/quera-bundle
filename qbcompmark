@@ -11,21 +11,26 @@ from rich.console import Console
 from rich.table import Table
 
 class Tabular:
-    def __init__(self, data, header=True, double=True):
+
+    def __init__(self, data: list, header=True, double=True):
         self.data = data
+        self.table = None
+        self._make_table(header, double)
+
+    def _make_table(self, header: bool, double: bool):
         self.table = Table(show_header=header, header_style='bold', 
-                    row_styles=["none", "dim"], box=box.DOUBLE,)
+                        row_styles=["none", "dim"], box=box.DOUBLE,)
         doub = 2 if double else 1
         for col,style,justify in zip( ('Student ID#', 'Grade')*doub, 
                 ('bold #6baed6', 'reverse bold white')*doub, ('center', 'center')*doub ):
             self.table.add_column(f"[{style}]{col}", style=style, no_wrap=False, justify=justify)
         if double:
-            if len(data)%2: data.append(('',''))
-            data = zip(data[::2], data[1::2])
-            for (col1, col2), (col3, col4) in data:
+            if len(self.data)%2: self.data.append(('',''))
+            self.data = zip(self.data[::2], self.data[1::2])
+            for (col1, col2), (col3, col4) in self.data:
                 self.table.add_row( *(col1, col2, col3, col4) )
         else:
-            for col1, col2 in data:
+            for col1, col2 in self.data:
                 self.table.add_row( *(col1, col2) )
 
     def show(self):
@@ -46,31 +51,31 @@ class Grade:
         self.df = None # dataframe of all assignment and their grades in detail
 
     def get_marks(self, file: Path) -> pd.DataFrame:
-        df = pd.read_excel(file, header=[0, 1], dtype={('مشخصات کاربر','شناسه کاربری'): str,})
-        sid = 'شناسه کاربری'
-        sname = 'نام و نام خانوادگی'
-        sgrade = 'نمره داوری با تاخیر'
-
-        major_header = list(OrderedSet([f for f, s in df.columns]))
-        minor_header = list(OrderedSet([s for f, s in df.columns]))
-        minor_header = [sid] + [sgrade] * (len(major_header) - 1)
+        udesc, uid, jgrade,lgrade = 'مشخصات کاربر',  'شناسه کاربری', 'نمره داوری با تاخیر', 'نمره استاد با تاخیر'
+        df = pd.read_excel(file, header=[0, 1], dtype={(udesc, uid): str})
+        # making the proper header for final dataframe
+        major_header = list(OrderedSet([f for f, s in df.columns])) # questions' titles
+        minor_header = list(OrderedSet([s for f, s in df.columns])) # marks' descriptions
+        major_header_copy = [major_header[0]]
+        for c in major_header[1:]: major_header_copy.extend([c, c])
+        major_header = major_header_copy
+        minor_header = [uid] + [jgrade, lgrade] * (len(major_header) - 1)
+        # headers of final dataframe
         headers = pd.MultiIndex.from_tuples(list(zip(major_header, minor_header)))
         ndf = df[headers]
-        ndf.columns = [
-            col.replace('سوال ', '') for col in minor_header[:1] + major_header[1:]
-        ]
-        ndf = ndf.fillna(0)
-        ndf = ndf.drop(ndf.loc[ndf[ndf.columns[0]] == 0].index)
-        ndf[ndf.columns[0]] = ndf[ndf.columns[0]].astype('str')  #uint64')
+        ndf.columns = [ col.replace('سوال ', '') for col in minor_header[:1] + major_header[1:] ]
+        ndf = ndf.replace('None', np.inf).fillna(0)
+        ndf = ndf.drop(ndf.loc[ndf[ndf.columns[0]] == 0].index) # drop the instructor and his/her TAs from the list
+        ndf[ndf.columns[0]] = ndf[ndf.columns[0]].astype('str')
         for i in range(1, len(headers)):
-            ndf[ndf.columns[i]] = ndf[ndf.columns[i]].astype('uint8')
+            ndf[ndf.columns[i]] = ndf[ndf.columns[i]].astype('float')
+        for i in range(1, len(ndf.columns), 2):
+            ndf[ndf.columns[i]] = ndf[[ndf.columns[i], ndf.columns[i+1]]].agg(min, axis=1)
+        ndf = ndf.iloc[:, [j for j, c in enumerate(ndf.columns) if j not in range(2,len(headers), 2)]]
         ndf = ndf.set_index(ndf.columns[0])
-        return ndf.groupby(level=0).sum()
+        return ndf.groupby(level=0).sum() # this makes all returned dataframe consistent, in the plot output
 
     def plot_marks(self, title=''):
-        """
-        `Ys` is a list of pandas Series including the grade of each question.
-        """
         fig, ax = plt.subplots()
         fig.set_figheight(4)
         fig.set_figwidth(16)
