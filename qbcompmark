@@ -5,8 +5,32 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from ordered_set import OrderedSet
-from rich import print
 from matplotlib import pyplot as plt
+from rich import print, box
+from rich.console import Console
+from rich.table import Table
+
+class Tabular:
+    def __init__(self, data, header=True, double=True):
+        self.data = data
+        self.table = Table(show_header=header, header_style='bold', 
+                    row_styles=["none", "dim"], box=box.DOUBLE,)
+        doub = 2 if double else 1
+        for col,style,justify in zip( ('Student ID#', 'Grade')*doub, 
+                ('bold #6baed6', 'reverse bold white')*doub, ('center', 'center')*doub ):
+            self.table.add_column(f"[{style}]{col}", style=style, no_wrap=False, justify=justify)
+        if double:
+            if len(data)%2: data.append(('',''))
+            data = zip(data[::2], data[1::2])
+            for (col1, col2), (col3, col4) in data:
+                self.table.add_row( *(col1, col2, col3, col4) )
+        else:
+            for col1, col2 in data:
+                self.table.add_row( *(col1, col2) )
+
+    def show(self):
+        Console().print()
+        Console().print(self.table)
 
 
 class Grade:
@@ -81,10 +105,9 @@ class Grade:
         self.df['sum'].hist()
         fig.savefig('hist.png', bbox_inches='tight')
         # outputing the average with list of all students with their total marks
-        print('='*60)
-        print(f"Average Score is: {self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment(s) with {len(self.df.columns)-1} Question(s)]")
-        print('='*60)
-        print( '\n'.join([f"{i}, {j}" for i,j in sorted(list(zip(self.df.index, self.df['sum'])))]) )
+        Tabular( [ (f"{i}", f"{j}") for i,j in sorted(list(zip(self.df.index, self.df['sum'])))] ).show()
+        Tabular( [("Average Score", f"{self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment(s) with {len(self.df.columns)-1} Question(s)]"),] 
+                        , header=False, double=False).show()
 
     def compute(self):
         self.accumulate()
