@@ -77,8 +77,9 @@ class Grade:
 
     def plot_marks(self, title=''):
         fig, ax = plt.subplots()
-        fig.set_figheight(4)
-        fig.set_figwidth(16)
+        # https://stackoverflow.com/questions/44863375/how-to-change-spacing-between-ticks-in-matplotlib
+        scale = [.6, .5, .4, .3][min(len(self.Ys[0])//20, 2)]
+        plt.gcf().set_size_inches(len(self.Ys[0])*scale, plt.gcf().get_size_inches()[1])
         for i,y in enumerate(self.Ys[:-1]):
             ax.plot(y.index, y, color=Grade.colors[i%9])
         ax.plot(self.Ys[-1].index, self.Ys[-1], marker='o', color='r')
