@@ -3,6 +3,7 @@ rich
 pyyaml
 pathlib
 pathlib2
+openpyxl
 selenium
 cryptocode
 configargparse
