@@ -105,14 +105,15 @@ class Grade:
     def csv_plot(self):
         # csv and marks plot
         self.df.to_csv('total.csv')
-        self.plot_marks(title=f"Cumulative Plot for {len(self.files)} Assignment{'s'*min(len(self.files)-1,1)} with {len(self.df.columns)-1} Question{'s'*min(len(self.df.columns)-2,1)} in Total")
+        sa, sq = 's'*min(len(self.files)-1,1), 's'*min(len(self.df.columns)-2,1)
+        self.plot_marks(title=f"Cumulative Plot for {len(self.files)} Assignment{sa} with {len(self.df.columns)-1} Question{sq} in Total")
         # histogram of marks
         fig = plt.figure()
         self.df['sum'].hist()
         fig.savefig('hist.png', bbox_inches='tight')
         # outputing the average with list of all students with their total marks
         Tabular( [ (f"{i}", f"{j}") for i,j in sorted(list(zip(self.df.index, self.df['sum'])))] ).show()
-        Tabular( [("Average Score", f"{self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment(s) with {len(self.df.columns)-1} Question(s)]"),] 
+        Tabular( [("Average Score", f"{self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment{sa} with {len(self.df.columns)-1} Question{sq}]"),] 
                         , header=False, double=False).show()
 
     def compute(self):
