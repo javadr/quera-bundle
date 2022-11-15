@@ -18,10 +18,10 @@ class Tabular:
         self._make_table(header, double)
 
     def _make_table(self, header: bool, double: bool):
-        self.table = Table(show_header=header, header_style='bold', 
+        self.table = Table(show_header=header, header_style='bold',
                         row_styles=["none", "dim"], box=box.DOUBLE,)
         doub = 2 if double else 1
-        for col,style,justify in zip( ('Student ID#', 'Grade')*doub, 
+        for col,style,justify in zip( ('Student ID#', 'Grade')*doub,
                 ('bold #6baed6', 'reverse bold white')*doub, ('center', 'center')*doub ):
             self.table.add_column(f"[{style}]{col}", style=style, no_wrap=False, justify=justify)
         if double:
@@ -100,7 +100,7 @@ class Grade:
             df = pd.concat([df, ndf], axis=1)
         df['sum'] = df.sum(axis=1).astype('uint32')
         self.Ys.append(df['sum'])
-        self.df = df 
+        self.df = df
 
     def csv_plot(self):
         # csv and marks plot
@@ -113,7 +113,7 @@ class Grade:
         fig.savefig('hist.png', bbox_inches='tight')
         # outputing the average with list of all students with their total marks
         Tabular( [ (f"{i}", f"{j}") for i,j in sorted(list(zip(self.df.index, self.df['sum'])))] ).show()
-        Tabular( [("Average Score", f"{self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment{sa} with {len(self.df.columns)-1} Question{sq}]"),] 
+        Tabular( [("Average Score", f"{self.df['sum'].sum()//len(self.df)} [{len(self.files)} Assignment{sa} with {len(self.df.columns)-1} Question{sq}]"),]
                         , header=False, double=False).show()
 
     def compute(self):
