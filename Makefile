@@ -2,7 +2,7 @@
 SHELL=bash
 PYTHON=/usr/bin/python3
 
-define makezip = 
+define makezip =
 
 	@echo -n "Making $(1) zip ... "
 	@cd "$(1)"; zip "$(1)".zip -qr ./*
@@ -10,10 +10,10 @@ define makezip =
 	@echo Done!
 endef
 
-all:
-	@"$(PYTHON)" qbgettest
+all: clean
+	@"$(PYTHON)" generator.py
 
-zip:
+zip: $(wildcard p?) $(wildcard p??)
 	$(foreach folder,$(shell ls p? p?? -d 2>/dev/null),$(call makezip,$(folder));)
 
 clean:
