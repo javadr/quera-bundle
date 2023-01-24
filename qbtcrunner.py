@@ -24,7 +24,6 @@ class TestCaseRunner():
 		print(f"Generating test cases for {solver} ... ")
 
 	def __print_redirect__(self, *args, **kwrds):
-		self.output = []
 		if 'end' not in kwrds: kwrds['end'] = '\n'
 		if 'sep' not in kwrds: kwrds['sep'] = ' '
 		self.output.append( kwrds['sep'].join([ str(i) for i in args ]) + kwrds['end'] )
@@ -32,6 +31,7 @@ class TestCaseRunner():
 	def run(self, ins):
 		# quera.ir does not accept more than 100 test cases!
 		if self.counter > 100: return
+		self.output = []
 		open(f"{self.path}/in/input{self.counter}.txt" ,'w').write( ins )
 		with open( self.solver ) as T:
 			exec( ''.join(T) ,
